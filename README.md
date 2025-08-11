@@ -181,10 +181,16 @@ The system uses default ports but can be configured:
 4. Commit and push to your fork
 5. Create a pull request
 
-## 👨‍💻 Author
+## 👨‍💻 Authors
 
 **Restu Jagat Wibisono**
 - GitHub: [@bunnyFL9](https://github.com/bunnyFL9)
+- ProcodeCG Internship Program 2025
+
+**Muhammad Fayiz Firdaus**
+- ProcodeCG Internship Program 2025
+
+**Aliep Anugrah Putra A.**
 - ProcodeCG Internship Program 2025
 
 ## 🙏 Acknowledgments
