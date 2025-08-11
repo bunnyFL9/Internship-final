@@ -2,22 +2,21 @@ const express = require('express');
 const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static('.'));
 
-// Initialize SQLite database
-const db = new sqlite3.Database('internship.db', (err) => {
+// Initialize SQLite database for Binus University
+const db = new sqlite3.Database('binus.db', (err) => {
   if (err) {
-    console.error('Could not connect to database', err);
+    console.error('Could not connect to Binus database', err);
   } else {
-    console.log('Connected to SQLite database');
+    console.log('Connected to Binus SQLite database');
   }
 });
 
-// Create projects table
+// Create projects table for Binus
 const createProjectsTable = `
 CREATE TABLE IF NOT EXISTS projects (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -30,7 +29,7 @@ CREATE TABLE IF NOT EXISTS projects (
 `;
 db.run(createProjectsTable);
 
-// Create members table
+// Create members table for Binus
 const createMembersTable = `
 CREATE TABLE IF NOT EXISTS members (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,23 +44,23 @@ db.run(createMembersTable);
 // Root route
 app.get('/', (req, res) => {
   res.json({
-    message: 'Internship Projects API',
+    message: 'Binus University Internship Projects API',
     status: 'Connected',
     endpoints: {
-      'GET /api/projects': 'Get all projects',
-      'POST /api/projects': 'Create new project',
-      'PUT /api/projects/:id': 'Update project',
-      'DELETE /api/projects/:id': 'Delete project',
-      'GET /api/members': 'Get all members',
-      'POST /api/members': 'Create new member',
-      'PUT /api/members/:id': 'Update member',
-      'DELETE /api/members/:id': 'Delete member',
-      'GET /api/projects/:id/members': 'Get members for a project'
+      'GET /api/projects': 'Get all Binus projects',
+      'POST /api/projects': 'Create new Binus project',
+      'PUT /api/projects/:id': 'Update Binus project',
+      'DELETE /api/projects/:id': 'Delete Binus project',
+      'GET /api/members': 'Get all Binus members',
+      'POST /api/members': 'Create new Binus member',
+      'PUT /api/members/:id': 'Update Binus member',
+      'DELETE /api/members/:id': 'Delete Binus member',
+      'GET /api/projects/:id/members': 'Get members for a Binus project'
     }
   });
 });
 
-// PROJECTS ENDPOINTS
+// PROJECTS ENDPOINTS FOR BINUS
 // Get all projects
 app.get('/api/projects', (req, res) => {
   db.all('SELECT * FROM projects', [], (err, rows) => {
@@ -69,6 +68,7 @@ app.get('/api/projects', (req, res) => {
     res.json(rows);
   });
 });
+
 // Create new project
 app.post('/api/projects', (req, res) => {
   const { team, title, category, link, year } = req.body;
@@ -84,6 +84,7 @@ app.post('/api/projects', (req, res) => {
     }
   );
 });
+
 // Update project
 app.put('/api/projects/:id', (req, res) => {
   const { id } = req.params;
@@ -100,34 +101,29 @@ app.put('/api/projects/:id', (req, res) => {
     }
   );
 });
-// Delete project (and its members)
+
+// Delete project
 app.delete('/api/projects/:id', (req, res) => {
   const { id } = req.params;
-  db.get('SELECT team FROM projects WHERE id = ?', [id], (err, row) => {
-    if (err || !row) return res.status(404).json({ error: 'Project not found' });
-    const teamName = row.team;
-    db.run('DELETE FROM projects WHERE id = ?', [id], function(err) {
-      if (err) return res.status(500).json({ error: err.message });
-      db.run('DELETE FROM members WHERE team = ?', [teamName], function(err2) {
-        if (err2) return res.status(500).json({ error: err2.message });
-        res.json({ message: 'Project and its members deleted', id });
-      });
-    });
-  });
-});
-// Get members for a project
-app.get('/api/projects/:id/members', (req, res) => {
-  const { id } = req.params;
-  db.get('SELECT team FROM projects WHERE id = ?', [id], (err, row) => {
-    if (err || !row) return res.status(404).json({ error: 'Project not found' });
-    db.all('SELECT * FROM members WHERE team = ?', [row.team], (err2, rows) => {
-      if (err2) return res.status(500).json({ error: err2.message });
-      res.json(rows);
-    });
+  db.run('DELETE FROM projects WHERE id = ?', [id], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    res.json({ message: 'Project deleted successfully' });
   });
 });
 
-// MEMBERS ENDPOINTS
+// Get members for a specific project
+app.get('/api/projects/:id/members', (req, res) => {
+  const { id } = req.params;
+  db.all('SELECT * FROM members WHERE team = (SELECT team FROM projects WHERE id = ?)', [id], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
+// MEMBERS ENDPOINTS FOR BINUS
 // Get all members
 app.get('/api/members', (req, res) => {
   db.all('SELECT * FROM members', [], (err, rows) => {
@@ -135,6 +131,7 @@ app.get('/api/members', (req, res) => {
     res.json(rows);
   });
 });
+
 // Create new member
 app.post('/api/members', (req, res) => {
   const { name, team, major, role } = req.body;
@@ -150,6 +147,7 @@ app.post('/api/members', (req, res) => {
     }
   );
 });
+
 // Update member
 app.put('/api/members/:id', (req, res) => {
   const { id } = req.params;
@@ -166,15 +164,33 @@ app.put('/api/members/:id', (req, res) => {
     }
   );
 });
+
 // Delete member
 app.delete('/api/members/:id', (req, res) => {
   const { id } = req.params;
   db.run('DELETE FROM members WHERE id = ?', [id], function(err) {
     if (err) return res.status(500).json({ error: err.message });
-    res.json({ message: 'Member deleted', id });
+    if (this.changes === 0) {
+      return res.status(404).json({ error: 'Member not found' });
+    }
+    res.json({ message: 'Member deleted successfully' });
   });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
+// Start server
+app.listen(PORT, () => {
+  console.log(`Binus University server running on port ${PORT}`);
+  console.log(`API available at http://localhost:${PORT}/api`);
+});
+
+// Graceful shutdown
+process.on('SIGINT', () => {
+  db.close((err) => {
+    if (err) {
+      console.error('Error closing database:', err);
+    } else {
+      console.log('Binus database connection closed.');
+    }
+    process.exit(0);
+  });
 }); 

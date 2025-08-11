@@ -471,15 +471,133 @@
         </div>
     </footer>
 
+    <!-- Application Form Modal -->
+    <div id="applicationModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close" id="closeApplicationModal">&times;</span>
+            <h3>Daftar untuk <span id="modalTrackTitle"></span></h3>
+            <form id="applicationForm" class="modal-form">
+                <input type="text" id="applicantName" placeholder="Nama Lengkap" required>
+                <input type="email" id="applicantEmail" placeholder="Alamat Email" required>
+                <input type="tel" id="applicantPhone" placeholder="Nomor Telepon" required>
+                <input type="text" id="applicantUniversity" placeholder="Universitas/Institusi" required>
+                <input type="text" id="applicantMajor" placeholder="Jurusan/Bidang Studi" required>
+                <select id="applicantYear" required>
+                    <option value="">Tahun Studi</option>
+                    <option value="Tahun 1">Tahun 1</option>
+                    <option value="Tahun 2">Tahun 2</option>
+                    <option value="Tahun 3">Tahun 3</option>
+                    <option value="Tahun 4">Tahun 4</option>
+                    <option value="Lulusan">Lulusan</option>
+                </select>
+                <textarea id="applicantExperience" placeholder="Pengalaman sebelumnya (opsional)" rows="3"></textarea>
+                <textarea id="applicantMotivation" placeholder="Mengapa Anda ingin bergabung dengan track ini?" rows="3" required></textarea>
+                <input type="url" id="applicantPortfolio" placeholder="Link Portfolio/GitHub (opsional)">
+                <button class="add-btn" type="submit">Kirim Aplikasi via WhatsApp</button>
+            </form>
+        </div>
+    </div>
+
     <script src="script.js"></script>
     <script>
+        let selectedTrack = '';
+
         // Add click handlers for apply buttons
         document.querySelectorAll('.track-apply-btn').forEach(button => {
             button.addEventListener('click', function() {
-                const trackTitle = this.closest('.track-card').querySelector('.track-title').textContent;
-                alert(`Application for ${trackTitle} track will be available soon!`);
+                const trackCard = this.closest('.track-card');
+                const trackTitle = trackCard.querySelector('.track-title').textContent;
+                
+                        // Direct to Google Form for each track
+        const formUrls = {
+            'Frontend Development': 'https://forms.gle/YOUR_FRONTEND_FORM_ID',
+            'Backend Development': 'https://forms.gle/YOUR_BACKEND_FORM_ID', 
+            'Full-Stack Development': 'https://forms.gle/YOUR_FULLSTACK_FORM_ID',
+            'Mobile Development': 'https://forms.gle/YOUR_MOBILE_FORM_ID',
+            'Data Science': 'https://forms.gle/YOUR_DATASCIENCE_FORM_ID'
+        };
+        
+        const formUrl = formUrls[trackTitle];
+        if (formUrl) {
+            window.open(formUrl, '_blank');
+        } else {
+            alert(`Application form for ${trackTitle} track will be available soon!`);
+        }
             });
         });
+
+        // Close modal
+        document.getElementById('closeApplicationModal').addEventListener('click', function() {
+            document.getElementById('applicationModal').style.display = 'none';
+            document.getElementById('applicationForm').reset();
+        });
+
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('applicationModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+                document.getElementById('applicationForm').reset();
+            }
+        });
+
+        // Handle form submission
+        document.getElementById('applicationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                name: document.getElementById('applicantName').value,
+                email: document.getElementById('applicantEmail').value,
+                phone: document.getElementById('applicantPhone').value,
+                university: document.getElementById('applicantUniversity').value,
+                major: document.getElementById('applicantMajor').value,
+                year: document.getElementById('applicantYear').value,
+                experience: document.getElementById('applicantExperience').value,
+                motivation: document.getElementById('applicantMotivation').value,
+                portfolio: document.getElementById('applicantPortfolio').value
+            };
+
+            // Generate personalized WhatsApp message
+            const message = generateWhatsAppMessage(selectedTrack, formData);
+            
+            // Open WhatsApp with pre-filled message
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://wa.me/628122015409?text=${encodedMessage}`;
+            
+            window.open(whatsappUrl, '_blank');
+            
+            // Close modal and reset form
+            document.getElementById('applicationModal').style.display = 'none';
+            document.getElementById('applicationForm').reset();
+        });
+
+        function generateWhatsAppMessage(track, applicant) {
+            return `🎯 *Aplikasi Track Baru - ProcodeCG*
+
+*Track:* ${track.title}
+*Kuota Tersedia:* ${track.stats}
+
+*Informasi Pelamar:*
+👤 *Nama:* ${applicant.name}
+📧 *Email:* ${applicant.email}
+📱 *Telepon:* ${applicant.phone}
+🎓 *Universitas:* ${applicant.university}
+📚 *Jurusan:* ${applicant.major}
+📅 *Tahun:* ${applicant.year}
+
+${applicant.experience ? `💼 *Pengalaman Sebelumnya:* ${applicant.experience}` : ''}
+${applicant.portfolio ? `🔗 *Portfolio:* ${applicant.portfolio}` : ''}
+
+*Motivasi:*
+${applicant.motivation}
+
+*Skill Track:* ${track.skills}
+
+---
+Silakan review aplikasi ini dan hubungi pelamar untuk langkah selanjutnya.
+
+Terima kasih! 🙏`;
+        }
     </script>
 </body>
 </html> 

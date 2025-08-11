@@ -1,72 +1,198 @@
-# ProcodeCG Internship Alumni Page
+# ProcodeCG Internship Management System
 
-A modern, responsive web page showcasing ProcodeCG's internship alumni from 2020-2025. This project is based on a Figma design and features a clean, professional layout with interactive elements.
+A comprehensive internship management system built for ProcodeCG that manages alumni data, projects, and member information across different universities including Telkom University and Binus University.
 
-## Features
+## 🚀 Features
 
-- **Responsive Design**: Works seamlessly on desktop, tablet, and mobile devices
-- **Modern UI**: Clean and professional design with smooth animations
-- **Interactive Elements**: Hover effects, click animations, and notification system
-- **Accessibility**: Proper semantic HTML and keyboard navigation support
-- **Performance**: Optimized images and smooth scrolling
+- **Multi-University Support**: Separate data management for different universities (Telkom & Binus)
+- **Alumni Management**: Track alumni data across multiple years (2020-2025)
+- **Project Management**: CRUD operations for internship projects with categories
+- **Member Management**: Track team members and their roles
+- **Search & Filter**: Advanced search and category filtering capabilities
+- **Responsive Design**: Modern, clean UI that works on all devices
+- **Real-time Updates**: Dynamic content updates without page refreshes
+- **Database Integration**: SQLite databases with seeded data
+- **Multi-Server Architecture**: Separate servers for different universities
 
-## Structure
+## 🏗️ Architecture
+
+The system consists of multiple servers:
+
+- **Main Server** (Port 3000): Serves static files and Telkom University data
+- **Alumni Server** (Port 3001): Manages alumni data with years, projects, and members
+- **Binus Server** (Port 3001): Alternative server for Binus University data
+
+## 📦 Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/bunnyFL9/Internship-final.git
+   cd Internship-final
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Seed the databases**
+   ```bash
+   # Seed alumni database
+   node alumni-seed.js
+   
+   # Seed Binus database
+   node binseed.js
+   ```
+
+## 🚦 Running the Application
+
+### Option 1: Start All Servers (Recommended)
+```bash
+node start-servers.js
+```
+
+This will start:
+- Telu server on port 3000
+- Alumni server on port 3001
+
+### Option 2: Start Individual Servers
+```bash
+# Main Telu server
+node server.js
+
+# Alumni server (in another terminal)
+node alumni-server.js
+
+# Binus server (alternative)
+node binus-server.js
+```
+
+## 🌐 Access URLs
+
+After starting the servers, you can access:
+
+- **Main Page**: http://localhost:3000/index.html
+- **Telkom University Page**: http://localhost:3000/telu.html
+- **Binus University Page**: http://localhost:3000/binus.html
+- **Activities Page**: http://localhost:3000/activities.html
+- **Calendar Page**: http://localhost:3000/calendar.html
+- **Tracks Page**: http://localhost:3000/tracks.html
+
+## 📊 API Endpoints
+
+### Telu Server (Port 3000)
+- `GET /api/projects` - Get all Telu projects
+- `POST /api/projects` - Create new Telu project
+- `PUT /api/projects/:id` - Update Telu project
+- `DELETE /api/projects/:id` - Delete Telu project
+- `GET /api/members` - Get all Telu members
+- `POST /api/members` - Create new Telu member
+- `PUT /api/members/:id` - Update Telu member
+- `DELETE /api/members/:id` - Delete Telu member
+
+### Alumni Server (Port 3001)
+- `GET /api/years` - Get all years with summary
+- `GET /api/years/:year` - Get specific year details
+- `GET /api/years/:year/projects` - Get projects for a year
+- `GET /api/years/:year/members` - Get members for a year
+- `GET /api/projects` - Get all alumni projects
+- `GET /api/members` - Get all alumni members
+- `GET /api/stats` - Get statistics summary
+
+### Binus Server (Port 3001 - Alternative)
+Similar endpoints as Alumni server but for Binus University data.
+
+## 🗄️ Database Structure
+
+The system uses SQLite databases:
+
+### Alumni Database (`alumni.db`)
+- **years**: Year information with descriptions
+- **projects**: Project details with team information
+- **members**: Member details with team associations
+
+### Telu Database (`internship.db`)
+- **projects**: Telkom University projects
+- **members**: Telkom University team members
+
+### Binus Database (`binus.db`)
+- **projects**: Binus University projects
+- **members**: Binus University team members
+
+## 🎨 Technologies Used
+
+- **Frontend**: HTML5, CSS3, JavaScript (ES6+)
+- **Backend**: Node.js, Express.js
+- **Database**: SQLite3
+- **Styling**: Custom CSS with modern design
+- **Icons**: Font Awesome
+- **Fonts**: Google Fonts (Inter)
+
+## 📁 Project Structure
 
 ```
-internship-alumni-page/
-├── index.html          # Main HTML structure
-├── styles.css          # CSS styles and responsive design
-├── script.js           # JavaScript functionality and interactions
-└── README.md           # Project documentation
+Internship-final/
+├── README.md                 # Main documentation
+├── package.json             # Node.js dependencies
+├── start-servers.js         # Server startup script
+├── server.js               # Main Telu server
+├── alumni-server.js        # Alumni data server
+├── binus-server.js         # Binus university server
+├── alumni-seed.js          # Alumni database seeder
+├── binseed.js             # Binus database seeder
+├── create-binus-tables.js # Binus table creation
+├── index.html             # Main alumni page
+├── telu.html              # Telkom university page
+├── binus.html             # Binus university page
+├── activities.html        # Activities page
+├── calendar.html          # Calendar page
+├── tracks.html            # Tracks page
+├── styles.css             # Main stylesheet
+├── script.js              # Shared JavaScript utilities
+├── alumni.js              # Alumni page functionality
+├── *.db                   # SQLite database files
+└── assets/                # Images and static files
 ```
 
-## Sections
+## 🛠️ Development
 
-1. **Header**: Navigation menu with logo, menu items, and user profile
-2. **Hero Section**: Large banner image with parallax effect
-3. **Description**: Introduction to the internship alumni program
-4. **Alumni Cards**: Interactive cards for each year (2020-2025)
-5. **Gallery**: Image gallery showcasing alumni projects
-6. **Footer**: Contact information and social media links
+### Adding New Universities
+1. Create a new server file (e.g., `university-server.js`)
+2. Create corresponding HTML page
+3. Update `start-servers.js` to include the new server
+4. Create seed file for initial data
 
-## Technologies Used
+### Database Schema Changes
+Update the respective seed files and table creation scripts.
 
-- HTML5
-- CSS3 (with Flexbox and Grid)
-- Vanilla JavaScript
-- Font Awesome Icons
-- Google Fonts (Inter)
-- Unsplash Images
+### UI Modifications
+Main styles are in `styles.css`. Each page has its own JavaScript functionality.
 
-## Getting Started
+## 🔐 Environment Variables
 
-1. Clone or download the project files
-2. Open `index.html` in a web browser
-3. No build process required - it's a static website
+The system uses default ports but can be configured:
+- `PORT`: Server port (default: 3000 for main, 3001 for alumni/binus)
 
-## Browser Support
+## 🤝 Contributing
 
-- Chrome (latest)
-- Firefox (latest)
-- Safari (latest)
-- Edge (latest)
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Commit and push to your fork
+5. Create a pull request
 
-## Design Features
+## 👨‍💻 Author
 
-- **Color Scheme**: Blue (#009DFF) primary color with white and gray accents
-- **Typography**: Inter font family for modern, clean text
-- **Layout**: Grid and Flexbox for responsive layouts
-- **Animations**: Smooth transitions and hover effects
-- **Images**: High-quality placeholder images from Unsplash
+**Restu Jagat Wibisono**
+- GitHub: [@bunnyFL9](https://github.com/bunnyFL9)
+- ProcodeCG Internship Program 2025
 
-## Customization
+## 🙏 Acknowledgments
 
-You can easily customize:
-- Colors in the CSS variables
-- Images by replacing the placeholder URLs
-- Content by editing the HTML
-- Animations by modifying the CSS transitions
+- ProcodeCG for the internship opportunity
+- All intern contributors across different universities
+- Mentors and supervisors for their guidance
 
-## License
+---
 
-This project is open source and available under the MIT License.
+**Note**: This system manages real internship data for ProcodeCG. Please handle all data responsibly and follow the company's data privacy guidelines.
