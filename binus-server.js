@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3002;
 
 app.use(cors());
 app.use(express.json());
@@ -177,6 +177,44 @@ app.delete('/api/members/:id', (req, res) => {
   });
 });
 
+// STATISTICS ENDPOINTS
+// Get statistics by year
+app.get('/api/stats/by-year', (req, res) => {
+  const query = `
+    SELECT 
+      COALESCE(p.year, 2025) as year,
+      COUNT(DISTINCT p.id) as project_count,
+      COUNT(DISTINCT m.id) as member_count
+    FROM projects p
+    LEFT JOIN members m ON p.team = m.team
+    GROUP BY p.year
+    ORDER BY p.year DESC
+  `;
+  
+  db.all(query, [], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
+// Get overall statistics
+app.get('/api/stats', (req, res) => {
+  const query = `
+    SELECT 
+      COUNT(DISTINCT p.id) as total_projects,
+      COUNT(DISTINCT m.id) as total_members,
+      COUNT(DISTINCT p.category) as total_categories,
+      'Binus University' as university
+    FROM projects p
+    LEFT JOIN members m ON p.team = m.team
+  `;
+  
+  db.get(query, [], (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(row);
+  });
+});
+
 // Start server
 app.listen(PORT, () => {
   console.log(`Binus University server running on port ${PORT}`);
@@ -193,4 +231,4 @@ process.on('SIGINT', () => {
     }
     process.exit(0);
   });
-}); 
+});

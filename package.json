@@ -4,11 +4,10 @@
   "description": "A modern, responsive web page showcasing ProcodeCG's internship alumni from 2020-2025. This project is based on a Figma design and features a clean, professional layout with interactive elements.",
   "main": "script.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
-    "alumni": "node alumni-server.js",
+    "start": "node start-servers.js",
+    "telkom": "node telkom-server.js",
+    "binus": "node binus-server.js",
     "seed": "node seed.js",
-    "alumni-seed": "node alumni-seed.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

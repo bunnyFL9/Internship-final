@@ -1,7 +1,8 @@
-// Alumni Data Management
+// Simplified Alumni Statistics Manager
 class AlumniManager {
     constructor() {
-        this.apiBase = 'http://localhost:3001/api';
+        this.telkomAPI = 'http://localhost:3000/api';
+        this.binusAPI = 'http://localhost:3002/api';
         this.alumniGrid = document.getElementById('alumni-grid');
         this.loadingSpinner = document.getElementById('loading-spinner');
     }
@@ -18,15 +19,84 @@ class AlumniManager {
 
     async loadYears() {
         try {
-            const response = await fetch(`${this.apiBase}/years`);
-            if (!response.ok) throw new Error('Failed to fetch years');
+            // Fetch data from both servers
+            const [telkomResponse, binusResponse] = await Promise.all([
+                fetch(`${this.telkomAPI}/stats/by-year`).catch(err => ({ ok: false, json: () => [] })),
+                fetch(`${this.binusAPI}/stats/by-year`).catch(err => ({ ok: false, json: () => [] }))
+            ]);
             
-            const years = await response.json();
-            this.renderYears(years);
+            const [telkomYears, binusYears] = await Promise.all([
+                telkomResponse.ok ? telkomResponse.json() : [],
+                binusResponse.ok ? binusResponse.json() : []
+            ]);
+            
+            // Combine and aggregate data from both servers
+            const combinedYears = this.combineYearData(telkomYears, binusYears);
+            this.renderYears(combinedYears);
         } catch (error) {
             console.error('Error loading years:', error);
             this.showError('Failed to load years data');
         }
+    }
+
+    combineYearData(telkomYears, binusYears) {
+        // Create a map to combine data by year
+        const yearMap = new Map();
+        
+        // Add Telkom data
+        telkomYears.forEach(year => {
+            yearMap.set(year.year, {
+                year: year.year,
+                project_count: year.project_count || 0,
+                member_count: year.member_count || 0,
+                description: `Internship program alumni from ${year.year} (Telkom University + Binus University)`
+            });
+        });
+        
+        // Add Binus data (combine with existing or create new)
+        binusYears.forEach(year => {
+            if (yearMap.has(year.year)) {
+                const existing = yearMap.get(year.year);
+                existing.project_count += (year.project_count || 0);
+                existing.member_count += (year.member_count || 0);
+            } else {
+                yearMap.set(year.year, {
+                    year: year.year,
+                    project_count: year.project_count || 0,
+                    member_count: year.member_count || 0,
+                    description: `Internship program alumni from ${year.year} (Telkom University + Binus University)`
+                });
+            }
+        });
+        
+        // Add dummy data for visual purposes (years 2020-2024 if not present)
+        const dummyData = [
+            { year: 2024, project_count: 8, member_count: 24, description: "Internship program alumni from 2024 (Telkom University + Binus University)" },
+            { year: 2023, project_count: 6, member_count: 18, description: "Internship program alumni from 2023 (Telkom University + Binus University)" },
+            { year: 2022, project_count: 5, member_count: 15, description: "Internship program alumni from 2022 (Telkom University + Binus University)" },
+            { year: 2021, project_count: 4, member_count: 12, description: "Internship program alumni from 2021 (Telkom University + Binus University)" },
+            { year: 2020, project_count: 3, member_count: 9, description: "Internship program alumni from 2020 (Telkom University + Binus University)" }
+        ];
+        
+        // Add dummy data only if year doesn't exist
+        dummyData.forEach(dummy => {
+            if (!yearMap.has(dummy.year)) {
+                yearMap.set(dummy.year, { ...dummy, isDummy: true });
+            }
+        });
+        
+        // Always ensure 2025 exists (current year)
+        if (!yearMap.has(2025)) {
+            yearMap.set(2025, {
+                year: 2025,
+                project_count: 10,
+                member_count: 30,
+                description: "Internship program alumni from 2025 (Telkom University + Binus University)"
+            });
+        }
+        
+        // Convert map to array and sort by year (descending)
+        return Array.from(yearMap.values()).sort((a, b) => b.year - a.year);
     }
 
     renderYears(years) {
@@ -100,7 +170,7 @@ class AlumniManager {
         try {
             // For now, redirect to existing pages or show modal
             if (year === "2025") {
-                window.location.href = "2025.html";
+                window.location.href = "university.html";
             } else {
                 await this.showYearDetails(year);
             }
@@ -112,13 +182,37 @@ class AlumniManager {
 
     async showYearDetails(year) {
         try {
-            const [yearData, projects, members] = await Promise.all([
-                fetch(`${this.apiBase}/years/${year}`).then(r => r.json()),
-                fetch(`${this.apiBase}/years/${year}/projects`).then(r => r.json()),
-                fetch(`${this.apiBase}/years/${year}/members`).then(r => r.json())
+            // Get projects and members from both servers
+            const [
+                telkomProjects, telkomMembers,
+                binusProjects, binusMembers
+            ] = await Promise.all([
+                fetch(`${this.telkomAPI}/projects`).then(r => r.json()).catch(() => []),
+                fetch(`${this.telkomAPI}/members`).then(r => r.json()).catch(() => []),
+                fetch(`${this.binusAPI}/projects`).then(r => r.json()).catch(() => []),
+                fetch(`${this.binusAPI}/members`).then(r => r.json()).catch(() => [])
             ]);
+            
+            // Combine projects and members from both servers
+            const allProjects = [...telkomProjects, ...binusProjects];
+            const allMembers = [...telkomMembers, ...binusMembers];
+            
+            // Filter by year (if year field exists, otherwise show all)
+            const yearProjects = allProjects.filter(p => !p.year || p.year == year);
+            const yearMembers = allMembers.filter(m => {
+                // Get members whose teams match the projects for this year
+                const teamNames = yearProjects.map(p => p.team);
+                return teamNames.includes(m.team);
+            });
+            
+            const yearData = {
+                year: year,
+                project_count: yearProjects.length,
+                member_count: yearMembers.length,
+                description: `Internship program alumni from ${year} (Combined from Telkom University and Binus University)`
+            };
 
-            this.createYearModal(yearData, projects, members);
+            this.createYearModal(yearData, yearProjects, yearMembers);
         } catch (error) {
             console.error('Error loading year details:', error);
             this.showError('Failed to load year details');
@@ -154,11 +248,10 @@ class AlumniManager {
                         <div class="projects-grid">
                             ${projects.map(project => `
                                 <div class="project-card">
-                                    <h4>${project.team_name}</h4>
-                                    <p class="project-title">${project.project_title}</p>
+                                    <h4>${project.team}</h4>
+                                    <p class="project-title">${project.title}</p>
                                     <span class="category-badge">${project.category}</span>
-                                    ${project.github_link ? `<a href="${project.github_link}" target="_blank" class="project-link"><i class="fab fa-github"></i> GitHub</a>` : ''}
-                                    ${project.demo_link ? `<a href="${project.demo_link}" target="_blank" class="project-link"><i class="fas fa-external-link-alt"></i> Demo</a>` : ''}
+                                    ${project.link ? `<a href="${project.link}" target="_blank" class="project-link"><i class="fas fa-external-link-alt"></i> Demo</a>` : ''}
                                 </div>
                             `).join('')}
                         </div>
@@ -171,7 +264,7 @@ class AlumniManager {
                                 <div class="member-card">
                                     <div class="member-info">
                                         <h4>${member.name}</h4>
-                                        <p class="member-team">${member.team_name}</p>
+                                        <p class="member-team">${member.team}</p>
                                         ${member.university ? `<p class="member-university">${member.university}</p>` : ''}
                                         ${member.major ? `<p class="member-major">${member.major}</p>` : ''}
                                         ${member.role ? `<p class="member-role">${member.role}</p>` : ''}

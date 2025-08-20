@@ -1,5 +1,5 @@
 const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('internship.db');
+const db = new sqlite3.Database('telkom.db');
 
 // Dummy projects
 const projects = [

@@ -9,7 +9,7 @@ app.use(express.json());
 app.use(express.static('.'));
 
 // Initialize SQLite database
-const db = new sqlite3.Database('internship.db', (err) => {
+const db = new sqlite3.Database('telkom.db', (err) => {
   if (err) {
     console.error('Could not connect to database', err);
   } else {
@@ -175,6 +175,44 @@ app.delete('/api/members/:id', (req, res) => {
   });
 });
 
+// STATISTICS ENDPOINTS
+// Get statistics by year
+app.get('/api/stats/by-year', (req, res) => {
+  const query = `
+    SELECT 
+      COALESCE(p.year, 2025) as year,
+      COUNT(DISTINCT p.id) as project_count,
+      COUNT(DISTINCT m.id) as member_count
+    FROM projects p
+    LEFT JOIN members m ON p.team = m.team
+    GROUP BY p.year
+    ORDER BY p.year DESC
+  `;
+  
+  db.all(query, [], (err, rows) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(rows);
+  });
+});
+
+// Get overall statistics
+app.get('/api/stats', (req, res) => {
+  const query = `
+    SELECT 
+      COUNT(DISTINCT p.id) as total_projects,
+      COUNT(DISTINCT m.id) as total_members,
+      COUNT(DISTINCT p.category) as total_categories,
+      'Telkom University' as university
+    FROM projects p
+    LEFT JOIN members m ON p.team = m.team
+  `;
+  
+  db.get(query, [], (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(row);
+  });
+});
+
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-}); 
+  console.log(`Telkom University server running on port ${PORT}`);
+});
