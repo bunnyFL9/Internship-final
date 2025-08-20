@@ -102,6 +102,9 @@ class AlumniManager {
     setupEventListeners() {
         // Add click handlers for year cards
         document.addEventListener('click', (e) => {
+            // Check if e.target exists and has closest method
+            if (!e.target || typeof e.target.closest !== 'function') return;
+            
             const yearCard = e.target.closest('.alumni-card');
             if (yearCard && yearCard.classList.contains('year-button')) {
                 const year = yearCard.dataset.year;
@@ -109,20 +112,21 @@ class AlumniManager {
             }
         });
 
-        // Add hover effects
-        document.addEventListener('mouseenter', (e) => {
-            const yearCard = e.target.closest('.alumni-card');
-            if (yearCard && yearCard.classList.contains('year-button')) {
-                yearCard.style.transform = 'translateY(-10px) scale(1.02)';
-            }
-        }, true);
+        // Add hover effects with event delegation
+        const alumniGrid = document.getElementById('alumni-grid');
+        if (alumniGrid) {
+            alumniGrid.addEventListener('mouseenter', (e) => {
+                if (e.target.classList && e.target.classList.contains('alumni-card')) {
+                    e.target.style.transform = 'translateY(-10px) scale(1.02)';
+                }
+            }, true);
 
-        document.addEventListener('mouseleave', (e) => {
-            const yearCard = e.target.closest('.alumni-card');
-            if (yearCard && yearCard.classList.contains('year-button')) {
-                yearCard.style.transform = 'translateY(0) scale(1)';
-            }
-        }, true);
+            alumniGrid.addEventListener('mouseleave', (e) => {
+                if (e.target.classList && e.target.classList.contains('alumni-card')) {
+                    e.target.style.transform = 'translateY(0) scale(1)';
+                }
+            }, true);
+        }
     }
 
     async handleYearClick(year) {
