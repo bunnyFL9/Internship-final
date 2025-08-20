@@ -213,6 +213,7 @@
             </div>
         </div>
     </footer>
+    <script src="config.js"></script>
     <script src="script.js"></script>
     <script>
         // --- PROJECTS & MEMBERS DATA AND LOGIC ---
@@ -225,8 +226,8 @@
             "IoT & Embedded Systems"
         ];
         
-        // API base URL
-        const API_BASE = 'http://localhost:3000/api';
+        // API base URL using config
+        const API_BASE = getApiUrl('/api/telkom');
         
         // Data arrays (will be populated from API)
         let projects = [];
