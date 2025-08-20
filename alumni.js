@@ -1,8 +1,7 @@
 // Simplified Alumni Statistics Manager
 class AlumniManager {
     constructor() {
-        this.telkomAPI = 'http://localhost:3000/api';
-        this.binusAPI = 'http://localhost:3002/api';
+        // Load the API configuration from config.js
         this.alumniGrid = document.getElementById('alumni-grid');
         this.loadingSpinner = document.getElementById('loading-spinner');
     }
@@ -19,19 +18,14 @@ class AlumniManager {
 
     async loadYears() {
         try {
-            // Fetch data from both servers
+            // Fetch data from both university endpoints
             const [telkomResponse, binusResponse] = await Promise.all([
-                fetch(`${this.telkomAPI}/stats/by-year`).catch(err => ({ ok: false, json: () => [] })),
-                fetch(`${this.binusAPI}/stats/by-year`).catch(err => ({ ok: false, json: () => [] }))
+                apiRequest(API_CONFIG.ENDPOINTS.telkom.stats).catch(err => ({ total_projects: 0, total_members: 0 })),
+                apiRequest(API_CONFIG.ENDPOINTS.binus.stats).catch(err => ({ total_projects: 0, total_members: 0 }))
             ]);
             
-            const [telkomYears, binusYears] = await Promise.all([
-                telkomResponse.ok ? telkomResponse.json() : [],
-                binusResponse.ok ? binusResponse.json() : []
-            ]);
-            
-            // Combine and aggregate data from both servers
-            const combinedYears = this.combineYearData(telkomYears, binusYears);
+            // Create year data using the statistics
+            const combinedYears = this.createYearData(telkomResponse, binusResponse);
             this.renderYears(combinedYears);
         } catch (error) {
             console.error('Error loading years:', error);
@@ -39,37 +33,20 @@ class AlumniManager {
         }
     }
 
-    combineYearData(telkomYears, binusYears) {
-        // Create a map to combine data by year
-        const yearMap = new Map();
+    createYearData(telkomStats, binusStats) {
+        // Generate year data for multiple years (2020-2025)
+        const currentYear = new Date().getFullYear();
+        const years = [];
         
-        // Add Telkom data
-        telkomYears.forEach(year => {
-            yearMap.set(year.year, {
-                year: year.year,
-                project_count: year.project_count || 0,
-                member_count: year.member_count || 0,
-                description: `Internship program alumni from ${year.year} (Telkom University + Binus University)`
-            });
+        // Add current year data (2025)
+        years.push({
+            year: 2025,
+            project_count: (telkomStats.total_projects || 0) + (binusStats.total_projects || 0),
+            member_count: (telkomStats.total_members || 0) + (binusStats.total_members || 0),
+            description: "Internship program alumni from 2025 (Telkom University + Binus University)"
         });
         
-        // Add Binus data (combine with existing or create new)
-        binusYears.forEach(year => {
-            if (yearMap.has(year.year)) {
-                const existing = yearMap.get(year.year);
-                existing.project_count += (year.project_count || 0);
-                existing.member_count += (year.member_count || 0);
-            } else {
-                yearMap.set(year.year, {
-                    year: year.year,
-                    project_count: year.project_count || 0,
-                    member_count: year.member_count || 0,
-                    description: `Internship program alumni from ${year.year} (Telkom University + Binus University)`
-                });
-            }
-        });
-        
-        // Add dummy data for visual purposes (years 2020-2024 if not present)
+        // Add previous years with simulated data (decreasing counts)
         const dummyData = [
             { year: 2024, project_count: 8, member_count: 24, description: "Internship program alumni from 2024 (Telkom University + Binus University)" },
             { year: 2023, project_count: 6, member_count: 18, description: "Internship program alumni from 2023 (Telkom University + Binus University)" },
@@ -78,25 +55,7 @@ class AlumniManager {
             { year: 2020, project_count: 3, member_count: 9, description: "Internship program alumni from 2020 (Telkom University + Binus University)" }
         ];
         
-        // Add dummy data only if year doesn't exist
-        dummyData.forEach(dummy => {
-            if (!yearMap.has(dummy.year)) {
-                yearMap.set(dummy.year, { ...dummy, isDummy: true });
-            }
-        });
-        
-        // Always ensure 2025 exists (current year)
-        if (!yearMap.has(2025)) {
-            yearMap.set(2025, {
-                year: 2025,
-                project_count: 10,
-                member_count: 30,
-                description: "Internship program alumni from 2025 (Telkom University + Binus University)"
-            });
-        }
-        
-        // Convert map to array and sort by year (descending)
-        return Array.from(yearMap.values()).sort((a, b) => b.year - a.year);
+        return [...years, ...dummyData].sort((a, b) => b.year - a.year);
     }
 
     renderYears(years) {
@@ -182,15 +141,15 @@ class AlumniManager {
 
     async showYearDetails(year) {
         try {
-            // Get projects and members from both servers
+            // Get projects and members from both universities
             const [
                 telkomProjects, telkomMembers,
                 binusProjects, binusMembers
             ] = await Promise.all([
-                fetch(`${this.telkomAPI}/projects`).then(r => r.json()).catch(() => []),
-                fetch(`${this.telkomAPI}/members`).then(r => r.json()).catch(() => []),
-                fetch(`${this.binusAPI}/projects`).then(r => r.json()).catch(() => []),
-                fetch(`${this.binusAPI}/members`).then(r => r.json()).catch(() => [])
+                apiRequest(API_CONFIG.ENDPOINTS.telkom.projects).catch(() => []),
+                apiRequest(API_CONFIG.ENDPOINTS.telkom.members).catch(() => []),
+                apiRequest(API_CONFIG.ENDPOINTS.binus.projects).catch(() => []),
+                apiRequest(API_CONFIG.ENDPOINTS.binus.members).catch(() => [])
             ]);
             
             // Combine projects and members from both servers
